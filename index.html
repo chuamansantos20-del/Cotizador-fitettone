@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#7b3028">
+<title>Cotizador Fitettone</title>
+<style>
+:root{--brown:#593b32;--red:#9b382e;--cream:#fffaf6;--soft:#f6eee8;--ink:#332923;--muted:#786d67;--line:#eaded6}
+*{box-sizing:border-box}body{margin:0;padding:16px 12px 24px;min-height:100vh;background:linear-gradient(155deg,#f5eae2,#fffaf6 60%,#f1e5dc);color:var(--ink);font-family:Nunito,"Trebuchet MS",Arial,sans-serif}.app{width:100%;max-width:460px;margin:0 auto}header{text-align:center;margin:8px 0 18px}.logo{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:15px;background:var(--red);color:#fff;font-size:25px;font-weight:900;margin-bottom:7px}h1{margin:0;color:var(--brown);font-size:27px}.subtitle{margin:5px 0;color:var(--muted);font-size:13px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 10px 28px #593b3217}.field{margin-bottom:15px}label{display:block;margin-bottom:7px;color:var(--brown);font-size:13px;font-weight:800}select,input{display:block;width:100%;height:49px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:15px}input{font-size:18px;font-weight:800}.hint{margin:6px 0 0;color:var(--muted);font-size:11px}.prices{display:flex;justify-content:space-between;gap:8px;margin:0 0 16px;padding:11px;background:var(--soft);border-radius:11px;color:var(--brown);font-size:12px}.btn{width:100%;min-height:48px;border:0;border-radius:13px;font:inherit;font-weight:900;font-size:15px;cursor:pointer}.primary{background:var(--red);color:white}.secondary{margin-top:10px;background:var(--brown);color:white}.result{display:none;margin-top:16px;padding:15px;border:1px solid var(--line);border-radius:15px;background:var(--cream)}.result.visible{display:block}.result-title{font-weight:900;color:var(--brown)}.total-label{margin:12px 0 0;color:var(--muted);font-size:12px}.total{margin:0;color:var(--red);font-size:34px;font-weight:900}.details{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-size:13px}.line{display:flex;justify-content:space-between;gap:12px;margin:7px 0}.line span{color:var(--muted)}.line strong{text-align:right}.note{padding:9px 10px;border-radius:9px;background:#f1f4ee;color:#4d6247;font-size:11px;line-height:1.4}.status{min-height:18px;margin:9px 0 0;text-align:center;color:#276749;font-size:12px;font-weight:700}.manual{display:none;width:100%;min-height:145px;margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px;font:13px/1.5 Arial,sans-serif}footer{text-align:center;margin:14px 6px 0;color:var(--muted);font-size:10px;line-height:1.5}
+</style>
+</head>
+<body>
+<main class="app">
+<header><div class="logo" aria-hidden="true">F</div><h1>Cotizador Fitettone</h1><p class="subtitle">Calcula el pedido y prepara el mensaje para WhatsApp</p></header>
+<section class="card" aria-label="Cotizador">
+<div class="field"><label for="product">Producto</label><select id="product"><option value="fitettone">Fitettone</option></select></div>
+<div class="field"><label for="quantity">Cantidad de unidades</label><input id="quantity" type="number" min="1" step="1" value="1" inputmode="numeric"><p class="hint">Se aplicará automáticamente el precio de pack cuando corresponda.</p></div>
+<div class="prices"><span>Individual: <b>S/ 35.00</b></span><span>Pack x2: <b>S/ 65.00</b></span></div>
+<div class="field"><label for="delivery">Canal de entrega</label><select id="delivery"><option value="pickup">Recojo en punto de venta — sin costo</option><option value="delivery">Delivery — costo por coordinar</option></select></div>
+<button class="btn primary" id="calculate" type="button">Calcular pedido</button>
+<section class="result" id="result" aria-live="polite">
+<div class="result-title">Resumen del pedido</div><p class="total-label">Total de productos</p><p class="total" id="total">S/ 35.00</p><div class="details" id="details"></div><p class="note" id="note"></p>
+<button class="btn secondary" id="copy" type="button">Copiar resumen</button><p class="status" id="status" role="status"></p><textarea class="manual" id="manual" readonly aria-label="Texto del resumen para copiar"></textarea>
+</section>
+</section>
+<footer>El costo de delivery, si aplica, se coordina por separado y no está incluido en el total.</footer>
+</main>
+<script>
+(function(){
+'use strict';
+var UNIT_PRICE=35, PACK_PRICE=65;
+var byId=function(id){return document.getElementById(id);};
+var quantity=byId('quantity'), delivery=byId('delivery'), result=byId('result'), total=byId('total'), details=byId('details'), note=byId('note'), status=byId('status'), manual=byId('manual'), copyButton=byId('copy');
+var currentSummary='';
+function money(value){return 'S/ '+value.toFixed(2);}
+function calculate(){
+ var qty=Number(quantity.value);
+ if(!Number.isSafeInteger(qty)||qty<1){status.textContent='Ingresa una cantidad entera de 1 o más.';quantity.focus();return;}
+ var packs=Math.floor(qty/2), singles=qty%2, packTotal=packs*PACK_PRICE, singleTotal=singles*UNIT_PRICE, amount=packTotal+singleTotal, pickup=delivery.value==='pickup';
+ total.textContent=money(amount);
+ details.innerHTML='<div class="line"><span>Producto</span><strong>Fitettone</strong></div>'+ '<div class="line"><span>Cantidad</span><strong>'+qty+' unidad'+(qty===1?'':'es')+'</strong></div>'+ '<div class="line"><span>Packs x2</span><strong>'+packs+' × '+money(PACK_PRICE)+' = '+money(packTotal)+'</strong></div>'+ '<div class="line"><span>Unidades individuales</span><strong>'+singles+' × '+money(UNIT_PRICE)+' = '+money(singleTotal)+'</strong></div>'+ '<div class="line"><span>Entrega</span><strong>'+(pickup?'Recojo sin costo':'Delivery por coordinar')+'</strong></div>';
+ note.textContent=pickup?'El recojo en punto de venta no genera costo adicional.':'El delivery no está incluido en el total; su costo se coordina por separado.';
+ currentSummary='¡Hola! Gracias por tu interés en Fitettone.\nTe comparto la cotización de tu pedido:\n\nProducto: Fitettone\nCantidad: '+qty+' unidad'+(qty===1?'':'es')+'\nPacks x2: '+packs+' ('+money(packTotal)+')\nUnidades individuales: '+singles+' ('+money(singleTotal)+')\nEntrega: '+(pickup?'Recojo en punto de venta (sin costo adicional)':'Delivery (costo por coordinar; no incluido)')+'\nTotal de productos: '+money(amount)+(pickup?'':'\nNota: el costo de delivery se coordina por separado y no está incluido en el total.')+'\n\nSi deseas confirmar tu pedido o tienes alguna consulta, estamos a tu disposición.\n¡Muchas gracias!';
+ status.textContent='';manual.value='';manual.style.display='none';copyButton.textContent='Copiar resumen';result.classList.add('visible');
+}
+function showManual(){manual.value=currentSummary;manual.style.display='block';manual.focus();manual.select();manual.setSelectionRange(0,manual.value.length);status.textContent='No se pudo copiar automáticamente. Selecciona el texto y elige Copiar.';}
+function copySummary(){
+ if(!currentSummary){status.textContent='Primero calcula el pedido.';return;}
+ // El fallback funciona también al abrir el HTML como archivo local.
+ var helper=document.createElement('textarea');helper.value=currentSummary;helper.setAttribute('readonly','');helper.style.position='fixed';helper.style.left='-9999px';helper.style.top='0';document.body.appendChild(helper);helper.focus();helper.select();helper.setSelectionRange(0,helper.value.length);
+ var copied=false;try{copied=document.execCommand('copy');}catch(error){copied=false;}document.body.removeChild(helper);
+ if(copied){status.textContent='Resumen copiado. Ya puedes pegarlo en WhatsApp.';copyButton.textContent='¡Copiado!';return;}
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(currentSummary).then(function(){status.textContent='Resumen copiado. Ya puedes pegarlo en WhatsApp.';copyButton.textContent='¡Copiado!';}).catch(showManual);return;}
+ showManual();
+}
+byId('calculate').addEventListener('click',calculate);
+copyButton.addEventListener('click',copySummary);
+quantity.addEventListener('keydown',function(event){if(event.key==='Enter')calculate();});
+[quantity,delivery,byId('product')].forEach(function(element){element.addEventListener('change',function(){result.classList.remove('visible');currentSummary='';status.textContent='';manual.style.display='none';});});
+})();
+</script>
+</body>
+</html>
